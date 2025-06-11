@@ -2,7 +2,7 @@ import pygame
 
 
 class ChineseChess:
-    def __init__(self, window_size=(800, 900), board_margin=50):
+    def __init__(self, window_size=(400, 450), board_margin=50):
         pygame.init()
         
         # Game state
@@ -56,7 +56,7 @@ class ChineseChess:
         self.game_over = False
         self.winner = None
         self.move_history = []
-        return self.get_state
+        return
 
     def create_initial_board(self):
         """Create the initial board setup for Chinese Chess"""
@@ -257,7 +257,7 @@ class ChineseChess:
     def draw_game_status(self):
         """Draw game status information"""
         # Draw whose turn it is
-        turn_text = f"Turn: {'Red' if self.turn == 'red' else 'Black'}"
+        turn_text = f"{len(self.move_history)} rounds\nTurn: {'Red' if self.turn == 'red' else 'Black'}"
         text_surface = self.small_font.render(turn_text, True, self.LINE_COLOR)
         self.screen.blit(text_surface, (10, 10))
         
@@ -568,8 +568,7 @@ class ChineseChess:
             if general_pos:
                 break
         
-        if not general_pos:
-            return False  # No general found (shouldn't happen in a valid game)
+        assert general_pos is not None, f"{color} general not found on the board"
         
         # Check if any opponent piece can capture the general
         opponent_color = 'black' if color == 'red' else 'red'
@@ -635,27 +634,23 @@ class ChineseChess:
             self.winner = 'red' if self.turn == 'black' else 'black'
 
         # test action space
-        print(f"{self.turn}'s action space: {self.get_action_space()}")
+        # print(f"{self.turn}'s action space: {self.get_action_space()}")
 
         return True
 
     def is_checkmate(self, color):
         """Check if the given color is in checkmate"""
-        if not self.is_in_check(color):
-            return False
-        
-        valid_moves_size = 0
-        # Try all possible moves for all pieces of the given color
+
+        # Check if there are any valid moves left
         for row in range(10):
             for col in range(9):
                 piece = self.board[row][col]
                 if piece and piece['color'] == color:
                     valid_moves = self.get_valid_moves(row, col)
-                    valid_moves_size += len(valid_moves)
-        if valid_moves_size == 0:
-            return True # No valid moves left, it's checkmate
-        
-        return False # valid moves exist, not checkmate
+                    if valid_moves:
+                        return False
+
+        return True
     
     def handle_click(self, pos):
         """Handle mouse click at the given position"""
@@ -701,6 +696,26 @@ class ChineseChess:
             if piece and piece['color'] == self.turn:
                 self.selected_piece = (row, col)
     
+    def board_to_string(self):
+        """Return a string visualization of the board for terminal display."""
+        piece_map = {
+            ('red', 'general'): '帅', ('red', 'advisor'): '仕', ('red', 'elephant'): '相',
+            ('red', 'horse'): '马', ('red', 'chariot'): '车', ('red', 'cannon'): '炮', ('red', 'soldier'): '兵',
+            ('black', 'general'): '将', ('black', 'advisor'): '士', ('black', 'elephant'): '象',
+            ('black', 'horse'): '玛', ('black', 'chariot'): '菊', ('black', 'cannon'): '泡', ('black', 'soldier'): '卒'
+        }
+        lines = []
+        for row in self.board:
+            line = []
+            for cell in row:
+                if cell is None:
+                    line.append(' . ')
+                else:
+                    s = piece_map[(cell['color'], cell['type'])]
+                    line.append(f'{s}')
+            lines.append(' '.join(line))
+        return '\n'.join(lines)
+
     def reset(self):
         """Reset the game to its initial state"""
         self.board = self.create_initial_board()
@@ -709,11 +724,11 @@ class ChineseChess:
         self.game_over = False
         self.winner = None
         self.move_history = []
-        return self.get_state
+        return
 
 
 if __name__ == "__main__":
-    game = ChineseChess(window_size=(400, 450))
+    game = ChineseChess()
     
     # Main game loop
     running = True
