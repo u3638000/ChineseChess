@@ -268,6 +268,18 @@ class ChineseChess:
             text_rect = text_surface.get_rect(center=(self.window_size[0] // 2, self.window_size[1] - 40))
             self.screen.blit(text_surface, text_rect)
 
+    def get_action_space(self):
+        """Get the action space for the game"""
+        action_space = []
+        for row in range(10):
+            for col in range(9):
+                piece = self.board[row][col]
+                if piece and piece['color'] == self.turn:
+                    valid_moves = self.get_valid_moves(row, col)
+                    for move in valid_moves:
+                        action_space.append(((row, col), move))
+        return action_space
+
     def get_valid_moves(self, row, col):
         """Get all valid moves for the piece at the given position and check for check"""
         possible_moves = self._get_valid_moves(row, col)
@@ -285,7 +297,6 @@ class ChineseChess:
             self.board[row][col] = self.board[to_row][to_col]
             self.board[to_row][to_col] = old_piece
         return valid_moves
-
 
     def _get_valid_moves(self, row, col):
         """Get all valid moves for the piece at the given position without checking for check"""
@@ -622,9 +633,12 @@ class ChineseChess:
         if self.is_checkmate(self.turn):
             self.game_over = True
             self.winner = 'red' if self.turn == 'black' else 'black'
-        
+
+        # test action space
+        print(f"{self.turn}'s action space: {self.get_action_space()}")
+
         return True
-    
+
     def is_checkmate(self, color):
         """Check if the given color is in checkmate"""
         if not self.is_in_check(color):
