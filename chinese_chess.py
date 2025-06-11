@@ -268,25 +268,9 @@ class ChineseChess:
             text_rect = text_surface.get_rect(center=(self.window_size[0] // 2, self.window_size[1] - 40))
             self.screen.blit(text_surface, text_rect)
 
-    def get_action_space(self, player=None):
-        """Get the action space for the game"""
-        player = self.turn if player is None else player
-        print(f"Getting action space for {player}")
-        actions = []
-        for row in range(10):
-            for col in range(9):
-                piece = self.board[row][col]
-                if piece and piece['color'] == player:
-                    print(f"Found piece at ({row}, {col}): {piece}")
-                    valid_moves = self.get_valid_moves(row, col)
-                    for move in valid_moves:
-                        actions.append(((row, col), move))
-        return actions
-
     def get_valid_moves(self, row, col):
         """Get all valid moves for the piece at the given position"""
         piece = self.board[row][col]
-        print(f"Getting valid moves for piece at ({row}, {col}): {piece}")
         if not piece:
             return []
         
@@ -525,15 +509,6 @@ class ChineseChess:
                      self.board[move_row][move_col]['color'] != piece['color'])):
                     valid_moves.append((move_row, move_col))
         
-        for move in valid_moves:
-            move_row, move_col = move
-            # Ensure the move does not put the player's general in check
-            if not self.is_move_valid((row, col), (move_row, move_col)):
-                print(f"Invalid move {move} for piece at {(row, col)} to {(move_row, move_col)}")
-                valid_moves.remove(move)
-
-        print(f"End Getting valid moves for piece at ({row}, {col}): {piece}")
-        print(f"Valid moves: {valid_moves}")
         return valid_moves
     
     def draw_valid_moves(self, moves):
@@ -647,9 +622,6 @@ class ChineseChess:
         if captured_piece and captured_piece['type'] == 'general':
             self.game_over = True
             self.winner = piece['color']
-
-        # test get_action_space
-        print(f"{self.turn}'s action space: {self.get_action_space()}")
         
         # Check if the new turn's player is in checkmate
         if self.is_checkmate(self.turn):
@@ -746,8 +718,7 @@ if __name__ == "__main__":
     
     # Main game loop
     running = True
-    print(f"{game.turn}'s action space: {game.get_action_space()}")
-    assert None
+
     while running:
         # print(f"action space: {game.get_action_space()}")
         for event in pygame.event.get():
