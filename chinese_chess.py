@@ -269,7 +269,26 @@ class ChineseChess:
             self.screen.blit(text_surface, text_rect)
 
     def get_valid_moves(self, row, col):
-        """Get all valid moves for the piece at the given position"""
+        """Get all valid moves for the piece at the given position and check for check"""
+        possible_moves = self._get_valid_moves(row, col)
+        valid_moves = []
+        for move in possible_moves:
+            to_row, to_col = move
+            # Temporarily make the move
+            old_piece = self.board[to_row][to_col]
+            self.board[to_row][to_col] = self.board[row][col]
+            self.board[row][col] = None
+            # Check if the move puts the player's general in check
+            if not self.is_in_check(self.turn):
+                valid_moves.append(move)
+            # Undo the move
+            self.board[row][col] = self.board[to_row][to_col]
+            self.board[to_row][to_col] = old_piece
+        return valid_moves
+
+
+    def _get_valid_moves(self, row, col):
+        """Get all valid moves for the piece at the given position without checking for check"""
         piece = self.board[row][col]
         if not piece:
             return []
@@ -510,7 +529,7 @@ class ChineseChess:
                     valid_moves.append((move_row, move_col))
         
         return valid_moves
-    
+
     def draw_valid_moves(self, moves):
         """Draw indicators for valid moves"""
         for row, col in moves:
@@ -547,35 +566,11 @@ class ChineseChess:
             for col in range(9):
                 piece = self.board[row][col]
                 if piece and piece['color'] == opponent_color:
-                    valid_moves = self.get_valid_moves(row, col)
+                    valid_moves = self._get_valid_moves(row, col)
                     if general_pos in valid_moves:
                         return True
         
         return False
-    
-    def is_move_valid(self, from_pos, to_pos):
-        # Check if the move puts or leaves the player's general in check
-        from_row, from_col = from_pos
-        to_row, to_col = to_pos
-
-        piece = self.board[from_row][from_col]
-        assert piece is not None, "Piece must not be None"
-        assert piece['color'] == self.turn, f"Piece {piece['color']} must belong to the current player {self.turn}"
-        
-        old_board = [row[:] for row in self.board]
-
-        # Move the piece
-        self.board[to_row][to_col] = self.board[from_row][from_col]
-        self.board[from_row][from_col] = None
-        # Check if the move puts the player's general in check
-        if self.is_in_check(self.turn):
-            # Undo the move
-            self.board = old_board
-            return False
-        # Restore the board
-        self.board = old_board
-        # If the move does not put the general in check, it's valid
-        return True
 
     def make_move(self, from_pos, to_pos):
         """Move a piece and handle captures"""
@@ -635,28 +630,18 @@ class ChineseChess:
         if not self.is_in_check(color):
             return False
         
+        valid_moves_size = 0
         # Try all possible moves for all pieces of the given color
         for row in range(10):
             for col in range(9):
                 piece = self.board[row][col]
                 if piece and piece['color'] == color:
                     valid_moves = self.get_valid_moves(row, col)
-                    for move_row, move_col in valid_moves:
-                        # Try the move
-                        old_board = [row[:] for row in self.board]
-                        self.board[move_row][move_col] = self.board[row][col]
-                        self.board[row][col] = None
-                        
-                        # Check if still in check
-                        still_in_check = self.is_in_check(color)
-                        
-                        # Restore the board
-                        self.board = old_board
-                        
-                        if not still_in_check:
-                            return False  # Found a move that gets out of check
+                    valid_moves_size += len(valid_moves)
+        if valid_moves_size == 0:
+            return True # No valid moves left, it's checkmate
         
-        return True  # No moves can get out of check
+        return False # valid moves exist, not checkmate
     
     def handle_click(self, pos):
         """Handle mouse click at the given position"""
