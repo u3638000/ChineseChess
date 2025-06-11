@@ -1,7 +1,7 @@
 from cc_gym import ChineseChessEnv
 
 # 创建环境
-env = ChineseChessEnv()
+env = ChineseChessEnv(render_mode="human")
 
 # 重置环境
 observation, info = env.reset()
